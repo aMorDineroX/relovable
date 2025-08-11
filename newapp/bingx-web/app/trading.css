@@ -1,0 +1,201 @@
+/* Styles personnalisés pour les composants de trading */
+
+/* Animation pour les prix en mouvement */
+@keyframes price-flash {
+  0% { background-color: rgba(34, 197, 94, 0.2); }
+  100% { background-color: transparent; }
+}
+
+@keyframes price-flash-red {
+  0% { background-color: rgba(239, 68, 68, 0.2); }
+  100% { background-color: transparent; }
+}
+
+.price-up {
+  animation: price-flash 0.5s ease-in-out;
+}
+
+.price-down {
+  animation: price-flash-red 0.5s ease-in-out;
+}
+
+/* Styles pour les sliders de levier */
+input[type="range"] {
+  background: transparent;
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-track {
+  background: #374151;
+  height: 8px;
+  border-radius: 4px;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  height: 20px;
+  width: 20px;
+  border-radius: 50%;
+  background: #06b6d4;
+  cursor: pointer;
+  border: 2px solid #0891b2;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  background: #0891b2;
+  transform: scale(1.1);
+}
+
+/* Styles pour les indicateurs de signal */
+.signal-buy {
+  position: relative;
+}
+
+.signal-buy::before {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 0 0 8px 8px;
+  border-color: transparent transparent #22c55e transparent;
+}
+
+.signal-sell {
+  position: relative;
+}
+
+.signal-sell::before {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 8px 0 0 8px;
+  border-color: #ef4444 transparent transparent transparent;
+}
+
+/* Animation pour les ordres en cours */
+.order-loading {
+  background: linear-gradient(45deg, transparent 33%, rgba(6, 182, 212, 0.1) 33%, rgba(6, 182, 212, 0.1) 66%, transparent 66%);
+  background-size: 16px 16px;
+  animation: loading-stripe 0.8s linear infinite;
+}
+
+@keyframes loading-stripe {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 16px 0;
+  }
+}
+
+/* Effets de transition pour les cartes */
+.card-hover {
+  transition: all 0.3s ease;
+}
+
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+/* Styles pour les graphiques en barres */
+.progress-bar {
+  position: relative;
+  background: rgba(55, 65, 81, 0.5);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #22c55e, #16a34a);
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+.progress-fill.red {
+  background: linear-gradient(90deg, #ef4444, #dc2626);
+}
+
+/* Animations pour les connexions WebSocket */
+.connection-indicator {
+  position: relative;
+}
+
+.connection-indicator::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 8px;
+  height: 8px;
+  background: #22c55e;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1.2);
+  }
+}
+
+/* Styles pour les tooltips */
+.tooltip {
+  position: relative;
+  display: inline-block;
+}
+
+.tooltip .tooltiptext {
+  visibility: hidden;
+  width: 200px;
+  background-color: #1f2937;
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 8px;
+  position: absolute;
+  z-index: 1;
+  bottom: 125%;
+  left: 50%;
+  margin-left: -100px;
+  opacity: 0;
+  transition: opacity 0.3s;
+  font-size: 12px;
+  border: 1px solid #374151;
+}
+
+.tooltip:hover .tooltiptext {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .grid-responsive {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .text-responsive {
+    font-size: 0.875rem;
+  }
+  
+  .button-responsive {
+    padding: 0.5rem;
+    font-size: 0.75rem;
+  }
+}
