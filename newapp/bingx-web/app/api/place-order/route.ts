@@ -12,7 +12,25 @@ function createSignature(queryString: string, secretKey: string): string {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { symbol, side, type, quantity, price, leverage } = body;
+    const { 
+      symbol, 
+      side, 
+      type, 
+      quantity, 
+      price, 
+      leverage,
+      // Nouveaux paramètres avancés
+      stopLoss,
+      takeProfit,
+      timeInForce = 'GTC',
+      clientOrderId,
+      closePosition,
+      activationPrice,
+      stopGuaranteed,
+      priceType,
+      workingType,
+      reduceOnly
+    } = body;
 
     if (!API_KEY || !SECRET_KEY) {
       throw new Error('API keys not configured');
@@ -27,6 +45,7 @@ export async function POST(request: Request) {
       type,
       quantity,
       timestamp,
+      timeInForce
     };
 
     // Ajouter le prix pour les ordres LIMIT
@@ -37,6 +56,43 @@ export async function POST(request: Request) {
     // Ajouter le levier si spécifié
     if (leverage) {
       params.leverage = leverage;
+    }
+
+    // Nouveaux paramètres avancés
+    if (stopLoss) {
+      params.stopLoss = stopLoss;
+    }
+
+    if (takeProfit) {
+      params.takeProfit = takeProfit;
+    }
+
+    if (clientOrderId) {
+      params.clientOrderId = clientOrderId.toLowerCase(); // BingX convertit automatiquement en minuscules
+    }
+
+    if (closePosition !== undefined) {
+      params.closePosition = closePosition;
+    }
+
+    if (activationPrice) {
+      params.activationPrice = activationPrice;
+    }
+
+    if (stopGuaranteed) {
+      params.stopGuaranteed = stopGuaranteed; // true, cutfee
+    }
+
+    if (priceType) {
+      params.priceType = priceType; // MARK_PRICE, CONTRACT_PRICE, INDEX_PRICE
+    }
+
+    if (workingType) {
+      params.workingType = workingType;
+    }
+
+    if (reduceOnly !== undefined) {
+      params.reduceOnly = reduceOnly;
     }
 
     // Créer la query string

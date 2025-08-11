@@ -654,9 +654,7 @@ export default function Home() {
                 <iframe
                   src={`https://fr.tradingview.com/widgetembed/?frameElementId=tradingview_chart&symbol=BINANCE:${convertToTradingViewSymbol(selectedChartPosition.symbol)}&interval=15&hidesidetoolbar=1&hidetoptoolbar=0&symboledit=1&saveimage=1&toolbarbg=f1f3f6&studies=[]&hideideas=1&theme=dark&style=1&timezone=Etc%2FUTC&studies_overrides={}&overrides={}&enabled_features=[]&disabled_features=[]&locale=fr&utm_source=localhost&utm_medium=widget_new&utm_campaign=chart&utm_term=BINANCE:${convertToTradingViewSymbol(selectedChartPosition.symbol)}`}
                   className="w-full h-full rounded-lg border border-gray-700"
-                  frameBorder="0"
-                  allowTransparency={true}
-                  scrolling="no"
+                  style={{ border: 'none' }}
                   allowFullScreen={true}
                 />
               </div>

@@ -22,87 +22,177 @@ interface RealTimePricesProps {
 
 const POPULAR_SYMBOLS = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'ADAUSDT', 'BNBUSDT', 'XRPUSDT', 'DOGEUSDT', 'AVAXUSDT'];
 
+// Mapping des symboles BingX vers CoinGecko
+const COINGECKO_MAPPING: { [key: string]: string } = {
+  'BTCUSDT': 'bitcoin',
+  'ETHUSDT': 'ethereum',
+  'SOLUSDT': 'solana',
+  'ADAUSDT': 'cardano',
+  'BNBUSDT': 'binancecoin',
+  'XRPUSDT': 'ripple',
+  'DOGEUSDT': 'dogecoin',
+  'AVAXUSDT': 'avalanche-2'
+};
+
 export default function RealTimePrices({ selectedSymbol, onSymbolSelect }: RealTimePricesProps) {
   const [prices, setPrices] = useState<PriceData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [priceAnimations, setPriceAnimations] = useState<{ [key: string]: 'up' | 'down' | null }>({});
+  const [previousPrices, setPreviousPrices] = useState<{ [key: string]: number }>({});
+  const [usingRealData, setUsingRealData] = useState(true);
 
-  const basePrices: { [key: string]: number } = {
-    'BTCUSDT': 43500,
-    'ETHUSDT': 2650,
-    'SOLUSDT': 98,
-    'ADAUSDT': 0.45,
-    'BNBUSDT': 315,
-    'XRPUSDT': 0.62,
-    'DOGEUSDT': 0.08,
-    'AVAXUSDT': 27,
+  // Récupérer les prix réels depuis CoinGecko
+  const fetchRealPrices = async (): Promise<PriceData[]> => {
+    try {
+      const coinIds = Object.values(COINGECKO_MAPPING).join(',');
+      const response = await fetch(
+        `https://api.coingecko.com/api/v3/simple/price?ids=${coinIds}&vs_currencies=usd&include_24hr_change=true&include_24hr_vol=true`,
+        {
+          headers: {
+            'Accept': 'application/json',
+          }
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Erreur API CoinGecko');
+      }
+
+      const data = await response.json();
+      
+      const pricesData: PriceData[] = POPULAR_SYMBOLS.map(symbol => {
+        const coinId = COINGECKO_MAPPING[symbol];
+        const coinData = data[coinId];
+        
+        if (!coinData) {
+          // Fallback avec des données de base si la crypto n'est pas trouvée
+          return generateFallbackPrice(symbol);
+        }
+
+        const price = coinData.usd;
+        const priceChange24h = coinData.usd_24h_change || 0;
+        const volume24h = coinData.usd_24h_vol || 0;
+        
+        // Calculer les prix haut/bas basés sur le changement 24h
+        const high = price * (1 + Math.abs(priceChange24h) / 200); // Estimation
+        const low = price * (1 - Math.abs(priceChange24h) / 200);  // Estimation
+        
+        // Mettre à jour les données de graphique
+        const existingPrice = prices.find(p => p.symbol === symbol);
+        let chartData = existingPrice?.chartData || [];
+        chartData.push(price);
+        if (chartData.length > 20) {
+          chartData = chartData.slice(-20);
+        }
+
+        return {
+          symbol,
+          price: price.toFixed(2),
+          priceChange: (price * priceChange24h / 100).toFixed(2),
+          priceChangePercent: priceChange24h.toFixed(2),
+          volume: volume24h.toFixed(0),
+          high: high.toFixed(2),
+          low: low.toFixed(2),
+          chartData: chartData
+        };
+      });
+
+      setUsingRealData(true);
+      return pricesData;
+    } catch (error) {
+      console.error('Erreur lors de la récupération des prix:', error);
+      setUsingRealData(false);
+      // Fallback vers des données simulées en cas d'erreur
+      return POPULAR_SYMBOLS.map(symbol => generateFallbackPrice(symbol));
+    }
   };
 
-  // Simuler des données de prix en temps réel
-  const generateMockPrice = (symbol: string, basePrice: number, existingChartData?: number[]): PriceData => {
-    const change = (Math.random() - 0.5) * 0.1; // Changement de ±5%
-    const priceChange = basePrice * change;
-    const newPrice = basePrice + priceChange;
-    const changePercent = (change * 100);
+  // Générer des données de fallback
+  const generateFallbackPrice = (symbol: string): PriceData => {
+    const basePrices: { [key: string]: number } = {
+      'BTCUSDT': 43500,
+      'ETHUSDT': 2650,
+      'SOLUSDT': 98,
+      'ADAUSDT': 0.45,
+      'BNBUSDT': 315,
+      'XRPUSDT': 0.62,
+      'DOGEUSDT': 0.08,
+      'AVAXUSDT': 27,
+    };
+
+    const basePrice = basePrices[symbol] || 100;
+    const change = (Math.random() - 0.5) * 0.05; // ±2.5%
+    const price = basePrice * (1 + change);
+    const changePercent = change * 100;
     
-    // Générer ou mettre à jour les données de graphique
-    let chartData = existingChartData || [];
-    chartData.push(newPrice);
+    // Conserver les données de graphique existantes
+    const existingPrice = prices.find(p => p.symbol === symbol);
+    let chartData = existingPrice?.chartData || [];
+    chartData.push(price);
     if (chartData.length > 20) {
-      chartData = chartData.slice(-20); // Garder seulement les 20 derniers points
+      chartData = chartData.slice(-20);
     }
     
     return {
       symbol,
-      price: newPrice.toFixed(2),
-      priceChange: priceChange.toFixed(2),
+      price: price.toFixed(2),
+      priceChange: (price * change).toFixed(2),
       priceChangePercent: changePercent.toFixed(2),
       volume: (Math.random() * 1000000 + 100000).toFixed(0),
-      high: (newPrice * (1 + Math.random() * 0.05)).toFixed(2),
-      low: (newPrice * (1 - Math.random() * 0.05)).toFixed(2),
+      high: (price * 1.05).toFixed(2),
+      low: (price * 0.95).toFixed(2),
       chartData: chartData
     };
   };
 
   useEffect(() => {
-    const updatePrices = () => {
-      const newPrices = POPULAR_SYMBOLS.map((symbol, index) => {
-        const existingPrice = prices[index];
-        const existingChartData = existingPrice?.chartData;
-        return generateMockPrice(symbol, basePrices[symbol] || 100, existingChartData);
-      });
-      
-      // Détecter les changements de prix pour les animations
-      const newAnimations: { [key: string]: 'up' | 'down' | null } = {};
-      newPrices.forEach((newPrice, index) => {
-        const oldPrice = prices[index];
-        if (oldPrice) {
-          const oldPriceValue = parseFloat(oldPrice.price);
-          const newPriceValue = parseFloat(newPrice.price);
-          if (newPriceValue > oldPriceValue) {
-            newAnimations[newPrice.symbol] = 'up';
-          } else if (newPriceValue < oldPriceValue) {
-            newAnimations[newPrice.symbol] = 'down';
+    const updatePrices = async () => {
+      try {
+        const newPrices = await fetchRealPrices();
+        
+        // Détecter les changements de prix pour les animations
+        const newAnimations: { [key: string]: 'up' | 'down' | null } = {};
+        newPrices.forEach((newPrice) => {
+          const oldPrice = previousPrices[newPrice.symbol];
+          if (oldPrice) {
+            const newPriceValue = parseFloat(newPrice.price);
+            if (newPriceValue > oldPrice) {
+              newAnimations[newPrice.symbol] = 'up';
+            } else if (newPriceValue < oldPrice) {
+              newAnimations[newPrice.symbol] = 'down';
+            }
           }
-        }
-      });
-      
-      setPriceAnimations(newAnimations);
-      setPrices(newPrices);
-      setLoading(false);
-      
-      // Nettoyer les animations après 500ms
-      setTimeout(() => {
-        setPriceAnimations({});
-      }, 500);
+        });
+        
+        // Mettre à jour les prix précédents pour la prochaine comparaison
+        const newPreviousPrices: { [key: string]: number } = {};
+        newPrices.forEach(price => {
+          newPreviousPrices[price.symbol] = parseFloat(price.price);
+        });
+        setPreviousPrices(newPreviousPrices);
+        
+        setPriceAnimations(newAnimations);
+        setPrices(newPrices);
+        setLoading(false);
+        setError(null);
+        
+        // Nettoyer les animations après 500ms
+        setTimeout(() => {
+          setPriceAnimations({});
+        }, 500);
+      } catch (err) {
+        console.error('Erreur lors de la mise à jour des prix:', err);
+        setError('Erreur lors de la récupération des prix');
+        setLoading(false);
+      }
     };
 
     // Mise à jour initiale
     updatePrices();
 
-    // Mise à jour toutes les 2 secondes
-    const interval = setInterval(updatePrices, 2000);
+    // Mise à jour toutes les 30 secondes (pour éviter les limites de l'API)
+    const interval = setInterval(updatePrices, 30000);
 
     return () => clearInterval(interval);
   }, []); // Dépendance vide pour éviter les boucles infinies
@@ -128,8 +218,10 @@ export default function RealTimePrices({ selectedSymbol, onSymbolSelect }: RealT
           Prix en Temps Réel
         </h3>
         <div className="flex items-center space-x-2">
-          <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-          <span className="text-sm text-gray-400">Live</span>
+          <div className={`w-2 h-2 rounded-full animate-pulse ${usingRealData ? 'bg-green-400' : 'bg-yellow-400'}`}></div>
+          <span className="text-sm text-gray-400">
+            {usingRealData ? 'Live (CoinGecko)' : 'Simulé'}
+          </span>
         </div>
       </div>
 

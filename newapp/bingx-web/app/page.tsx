@@ -1,11 +1,19 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { ArrowPathIcon, BanknotesIcon, ChartBarIcon, ChartPieIcon, CreditCardIcon, CurrencyDollarIcon, ScaleIcon, TableCellsIcon, XMarkIcon, MagnifyingGlassIcon, ClockIcon, ArrowTrendingUpIcon, ArrowTrendingDownIcon, ChevronUpIcon, ChevronDownIcon, ChartBarSquareIcon, EyeIcon, Cog6ToothIcon, BookOpenIcon, WalletIcon } from '@heroicons/react/24/outline';
+import { ArrowPathIcon, BanknotesIcon, ChartBarIcon, ChartPieIcon, CreditCardIcon, CurrencyDollarIcon, ScaleIcon, TableCellsIcon, XMarkIcon, MagnifyingGlassIcon, ClockIcon, ArrowTrendingUpIcon, ArrowTrendingDownIcon, ChevronUpIcon, ChevronDownIcon, ChartBarSquareIcon, EyeIcon, Cog6ToothIcon, BookOpenIcon, WalletIcon, TrophyIcon, SparklesIcon } from '@heroicons/react/24/outline';
 import RealTimePrices from '../components/RealTimePrices';
 import OrderBook from '../components/OrderBook';
 import TechnicalIndicators from '../components/TechnicalIndicators';
 import AdvancedTrading from '../components/AdvancedTrading';
+import AdvancedTradingPro from '../components/AdvancedTradingPro';
+import MultiAssetsManagement from '../components/MultiAssetsManagement';
+import MarketDataDashboard from '../components/MarketDataDashboard';
+import AlertsAndNotifications from '../components/AlertsAndNotifications';
+import UserSettingsPanel from '../components/UserSettingsPanel';
+import PerformanceDashboard from '../components/PerformanceDashboard';
+import EnhancedPortfolioView from '../components/EnhancedPortfolioView';
+import EnhancedPositionsView from '../components/EnhancedPositionsView';
 import RiskCalculator from '../components/RiskCalculator';
 import TradingPerformance from '../components/TradingPerformance';
 import TradingAlerts from '../components/TradingAlerts';
@@ -73,8 +81,8 @@ interface TradeOrder {
   leverage?: number;
 }
 
-type Tab = 'positions' | 'orders' | 'market' | 'trading' | 'portfolio';
-type TradingSubTab = 'simple' | 'advanced' | 'analysis';
+type Tab = 'positions' | 'orders' | 'market' | 'trading' | 'portfolio' | 'performance' | 'enhanced';
+type TradingSubTab = 'simple' | 'advanced' | 'analysis' | 'pro' | 'multi-assets';
 type PositionFilter = 'all' | 'profitable' | 'losing';
 type SortField = 'symbol' | 'positionSide' | 'positionAmt' | 'avgPrice' | 'unrealizedProfit' | 'leverage';
 type SortDirection = 'asc' | 'desc';
@@ -393,6 +401,8 @@ export default function Home() {
         <header className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-cyan-400">BingX Dashboard Pro</h1>
           <div className="flex gap-4 items-center">
+            <UserSettingsPanel />
+            <AlertsAndNotifications />
             <TradingAlerts />
             <button
               onClick={fetchData}
@@ -505,7 +515,12 @@ export default function Home() {
                     />
                     <TabButton
                       active={activeTab === 'market'}
-                      onClick={() => setActiveTab('market')}
+                      onClick={() => {
+                        setActiveTab('market');
+                        if (symbols.length === 0) {
+                          fetchSymbols();
+                        }
+                      }}
                       icon={<CurrencyDollarIcon className="h-5 w-5" />}
                       label="Market"
                       count={symbols.length}
@@ -524,6 +539,20 @@ export default function Home() {
                       icon={<WalletIcon className="h-5 w-5" />}
                       label="Portefeuille"
                       color="orange"
+                    />
+                    <TabButton
+                      active={activeTab === 'performance'}
+                      onClick={() => setActiveTab('performance')}
+                      icon={<TrophyIcon className="h-5 w-5" />}
+                      label="Performance"
+                      color="yellow"
+                    />
+                    <TabButton
+                      active={activeTab === 'enhanced'}
+                      onClick={() => setActiveTab('enhanced')}
+                      icon={<SparklesIcon className="h-5 w-5" />}
+                      label="Enrichi"
+                      color="purple"
                     />
                   </div>
                 </div>
@@ -787,85 +816,22 @@ export default function Home() {
               )}
 
               {activeTab === 'market' && (
-                loading.symbols ? (
-                  <div className="flex justify-center items-center h-48">
-                    <ArrowPathIcon className="h-8 w-8 animate-spin text-gray-400" />
-                  </div>
-                ) : filteredSymbols.length > 0 ? (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left">
-                      <thead>
-                        <tr className="border-b border-gray-700">
-                          <th className="p-3 text-gray-300">Symbole</th>
-                          <th className="p-3 text-gray-300">Actif de Base</th>
-                          <th className="p-3 text-gray-300">Devise de Cotation</th>
-                          <th className="p-3 text-gray-300">Statut</th>
-                          <th className="p-3 text-gray-300">Prix Min</th>
-                          <th className="p-3 text-gray-300">Quantité Min</th>
-                          <th className="p-3 text-gray-300">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {filteredSymbols.slice(0, 50).map((symbol) => (
-                          <tr key={symbol.symbol} className="border-b border-gray-700/50 hover:bg-gray-700/30">
-                            <td className="p-3">
-                              <span className="font-mono text-cyan-400">{symbol.symbol}</span>
-                            </td>
-                            <td className="p-3 text-gray-300">{symbol.baseAsset}</td>
-                            <td className="p-3 text-gray-300">{symbol.quoteAsset}</td>
-                            <td className="p-3">
-                              <span className={`px-2 py-1 rounded-full text-xs ${
-                                symbol.status === 'TRADING' 
-                                  ? 'bg-green-900/50 text-green-400' 
-                                  : 'bg-red-900/50 text-red-400'
-                              }`}>
-                                {symbol.status}
-                              </span>
-                            </td>
-                            <td className="p-3 text-gray-300 font-mono text-sm">{symbol.minPrice}</td>
-                            <td className="p-3 text-gray-300 font-mono text-sm">{symbol.minQty}</td>
-                            <td className="p-3">
-                              <button
-                                onClick={() => {
-                                  setCustomSymbol(symbol.symbol);
-                                  setShowChartModal(true);
-                                  setSelectedChartPosition({ 
-                                    symbol: symbol.symbol,
-                                    positionSide: 'LONG',
-                                    leverage: 1,
-                                    unrealizedProfit: '0'
-                                  } as Position);
-                                }}
-                                className="text-cyan-400 hover:text-cyan-300 transition-colors"
-                                title="Voir le graphique"
-                              >
-                                <ChartBarSquareIcon className="h-5 w-5" />
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                    {filteredSymbols.length > 50 && (
-                      <div className="text-center py-4 text-gray-500">
-                        <p>Affichage des 50 premiers résultats sur {filteredSymbols.length} symboles</p>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="text-center py-10 text-gray-500">
-                    <p>Aucun symbole trouvé.</p>
-                  </div>
-                )
+                <MarketDataDashboard
+                  selectedSymbol={symbolSearchTerm || 'BTC-USDT'}
+                  onSymbolSelect={(symbol) => {
+                    setSymbolSearchTerm(symbol);
+                    setTradingSymbol(symbol);
+                  }}
+                />
               )}
 
               {activeTab === 'trading' && (
                 <div className="space-y-6">
                   {/* Sous-onglets pour Trading */}
-                  <div className="flex space-x-1 bg-gray-700 rounded-lg p-1">
+                  <div className="flex space-x-1 bg-gray-700 rounded-lg p-1 overflow-x-auto">
                     <button
                       onClick={() => setActiveTradingSubTab('simple')}
-                      className={`px-4 py-2 rounded-md transition-colors ${
+                      className={`px-4 py-2 rounded-md transition-colors whitespace-nowrap ${
                         activeTradingSubTab === 'simple' ? 'bg-cyan-600 text-white' : 'text-gray-300 hover:text-white'
                       }`}
                     >
@@ -874,7 +840,7 @@ export default function Home() {
                     </button>
                     <button
                       onClick={() => setActiveTradingSubTab('advanced')}
-                      className={`px-4 py-2 rounded-md transition-colors ${
+                      className={`px-4 py-2 rounded-md transition-colors whitespace-nowrap ${
                         activeTradingSubTab === 'advanced' ? 'bg-cyan-600 text-white' : 'text-gray-300 hover:text-white'
                       }`}
                     >
@@ -883,12 +849,30 @@ export default function Home() {
                     </button>
                     <button
                       onClick={() => setActiveTradingSubTab('analysis')}
-                      className={`px-4 py-2 rounded-md transition-colors ${
+                      className={`px-4 py-2 rounded-md transition-colors whitespace-nowrap ${
                         activeTradingSubTab === 'analysis' ? 'bg-cyan-600 text-white' : 'text-gray-300 hover:text-white'
                       }`}
                     >
                       <BookOpenIcon className="h-4 w-4 inline mr-2" />
                       Analyse
+                    </button>
+                    <button
+                      onClick={() => setActiveTradingSubTab('pro')}
+                      className={`px-4 py-2 rounded-md transition-colors whitespace-nowrap ${
+                        activeTradingSubTab === 'pro' ? 'bg-cyan-600 text-white' : 'text-gray-300 hover:text-white'
+                      }`}
+                    >
+                      <ChartBarIcon className="h-4 w-4 inline mr-2" />
+                      Pro Trading
+                    </button>
+                    <button
+                      onClick={() => setActiveTradingSubTab('multi-assets')}
+                      className={`px-4 py-2 rounded-md transition-colors whitespace-nowrap ${
+                        activeTradingSubTab === 'multi-assets' ? 'bg-cyan-600 text-white' : 'text-gray-300 hover:text-white'
+                      }`}
+                    >
+                      <CurrencyDollarIcon className="h-4 w-4 inline mr-2" />
+                      Multi-Assets
                     </button>
                   </div>
 
@@ -1177,11 +1161,45 @@ export default function Home() {
                       </div>
                     </div>
                   )}
+                  {activeTradingSubTab === 'pro' && (
+                    <div>
+                      <AdvancedTradingPro 
+                        symbol={tradingSymbol}
+                        onOrderUpdate={(data) => {
+                          console.log('Pro order updated:', data);
+                          fetchData(); // Refresh positions and balance
+                          fetchOrders(); // Refresh orders
+                        }}
+                      />
+                    </div>
+                  )}
+
+                  {activeTradingSubTab === 'multi-assets' && (
+                    <div>
+                      <MultiAssetsManagement 
+                        onUpdate={(data) => {
+                          console.log('Multi-assets updated:', data);
+                          fetchData(); // Refresh data
+                        }}
+                      />
+                    </div>
+                  )}
                 </div>
               )}
 
               {activeTab === 'portfolio' && (
                 <PortfolioTracker />
+              )}
+
+              {activeTab === 'performance' && (
+                <PerformanceDashboard />
+              )}
+
+              {activeTab === 'enhanced' && (
+                <div className="space-y-8">
+                  <EnhancedPortfolioView />
+                  <EnhancedPositionsView />
+                </div>
               )}
             </div>
           </div>
@@ -1290,9 +1308,7 @@ export default function Home() {
                   key={customSymbol} // Force re-render when symbol changes
                   src={`https://fr.tradingview.com/widgetembed/?frameElementId=tradingview_chart&symbol=BINANCE:${convertToTradingViewSymbol(customSymbol)}&interval=15&hidesidetoolbar=1&hidetoptoolbar=0&symboledit=1&saveimage=1&toolbarbg=f1f3f6&studies=[]&hideideas=1&theme=dark&style=1&timezone=Etc%2FUTC&studies_overrides={}&overrides={}&enabled_features=[]&disabled_features=[]&locale=fr&utm_source=localhost&utm_medium=widget_new&utm_campaign=chart&utm_term=BINANCE:${convertToTradingViewSymbol(customSymbol)}`}
                   className="w-full h-full rounded-lg border border-gray-700"
-                  frameBorder="0"
-                  allowTransparency={true}
-                  scrolling="no"
+                  style={{ border: 'none' }}
                   allowFullScreen={true}
                 />
               </div>
@@ -1400,6 +1416,8 @@ function getTabColor(tab: Tab): string {
     market: 'bg-green-400',
     trading: 'bg-cyan-400',
     portfolio: 'bg-orange-400',
+    performance: 'bg-yellow-400',
+    enhanced: 'bg-purple-600',
   };
   return colors[tab];
 }
@@ -1411,6 +1429,8 @@ function getTabTitle(tab: Tab): string {
     market: 'Données de Marché',
     trading: 'Interface de Trading',
     portfolio: 'Suivi de Portefeuille',
+    performance: 'Performance & Analytics',
+    enhanced: 'Données Enrichies BingX',
   };
   return titles[tab];
 }
@@ -1422,6 +1442,8 @@ function getTabDescription(tab: Tab): string | null {
     market: 'Explorez les cryptomonnaies disponibles',
     trading: 'Passez des ordres d\'achat et de vente',
     portfolio: 'Analysez les performances de votre portefeuille',
+    performance: 'Métriques détaillées et analyse de performance',
+    enhanced: 'Données avancées avec calculs de risque et marché',
   };
   return descriptions[tab];
 }
