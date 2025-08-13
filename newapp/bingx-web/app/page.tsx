@@ -15,6 +15,7 @@ import PerformanceDashboard from '../components/PerformanceDashboard';
 import EnhancedPortfolioView from '../components/EnhancedPortfolioView';
 import EnhancedPositionsView from '../components/EnhancedPositionsView';
 import RiskCalculator from '../components/RiskCalculator';
+import DatabaseManager from '../components/DatabaseManager';
 import TradingPerformance from '../components/TradingPerformance';
 import TradingAlerts from '../components/TradingAlerts';
 import PortfolioTracker from '../components/PortfolioTracker';
@@ -81,7 +82,7 @@ interface TradeOrder {
   leverage?: number;
 }
 
-type Tab = 'positions' | 'orders' | 'market' | 'trading' | 'portfolio' | 'performance' | 'enhanced';
+type Tab = 'positions' | 'orders' | 'market' | 'trading' | 'portfolio' | 'performance' | 'enhanced' | 'database';
 type TradingSubTab = 'simple' | 'advanced' | 'analysis' | 'pro' | 'multi-assets';
 type PositionFilter = 'all' | 'profitable' | 'losing';
 type SortField = 'symbol' | 'positionSide' | 'positionAmt' | 'avgPrice' | 'unrealizedProfit' | 'leverage';
@@ -553,6 +554,13 @@ export default function Home() {
                       icon={<SparklesIcon className="h-5 w-5" />}
                       label="Enrichi"
                       color="purple"
+                    />
+                    <TabButton
+                      active={activeTab === 'database'}
+                      onClick={() => setActiveTab('database')}
+                      icon={<CreditCardIcon className="h-5 w-5" />}
+                      label="Database"
+                      color="gray"
                     />
                   </div>
                 </div>
@@ -1201,6 +1209,10 @@ export default function Home() {
                   <EnhancedPositionsView />
                 </div>
               )}
+
+              {activeTab === 'database' && (
+                <DatabaseManager />
+              )}
             </div>
           </div>
         </div>
@@ -1418,6 +1430,7 @@ function getTabColor(tab: Tab): string {
     portfolio: 'bg-orange-400',
     performance: 'bg-yellow-400',
     enhanced: 'bg-purple-600',
+    database: 'bg-gray-600',
   };
   return colors[tab];
 }
@@ -1431,6 +1444,7 @@ function getTabTitle(tab: Tab): string {
     portfolio: 'Suivi de Portefeuille',
     performance: 'Performance & Analytics',
     enhanced: 'Données Enrichies BingX',
+    database: 'Base de Données',
   };
   return titles[tab];
 }
@@ -1444,6 +1458,7 @@ function getTabDescription(tab: Tab): string | null {
     portfolio: 'Analysez les performances de votre portefeuille',
     performance: 'Métriques détaillées et analyse de performance',
     enhanced: 'Données avancées avec calculs de risque et marché',
+    database: 'Synchronisation et gestion de la base de données',
   };
   return descriptions[tab];
 }

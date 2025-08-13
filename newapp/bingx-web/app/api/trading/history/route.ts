@@ -74,8 +74,9 @@ export async function GET(request: Request) {
     }
 
     // 3. Traiter et enrichir les données des ordres
-    const ordersData = ordersResponse.data?.data || [];
-    const enrichedOrders = ordersData.map((order: any) => {
+    const ordersData = ordersResponse.data?.data || ordersResponse.data || [];
+    const ordersArray = Array.isArray(ordersData) ? ordersData : [];
+    const enrichedOrders = ordersArray.map((order: any) => {
       const price = parseFloat(order.price || '0');
       const executedQty = parseFloat(order.executedQty || '0');
       const origQty = parseFloat(order.origQty || '0');

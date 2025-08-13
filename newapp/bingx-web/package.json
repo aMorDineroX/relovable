@@ -6,12 +6,16 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "db:init": "npx tsx scripts/init-db.ts",
+    "db:reset": "npx tsx scripts/init-db.ts"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
+    "@neondatabase/serverless": "^1.0.1",
     "axios": "^1.11.0",
     "crypto-js": "^4.2.0",
+    "dotenv": "^17.2.1",
     "next": "15.4.6",
     "react": "19.1.0",
     "react-dom": "19.1.0"
@@ -26,6 +30,7 @@
     "eslint": "^9",
     "eslint-config-next": "15.4.6",
     "tailwindcss": "^4",
+    "tsx": "^4.20.3",
     "typescript": "^5"
   }
 }
