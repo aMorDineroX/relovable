@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { ArrowPathIcon, BanknotesIcon, ChartBarIcon, ChartPieIcon, CreditCardIcon, CurrencyDollarIcon, ScaleIcon, TableCellsIcon, XMarkIcon, MagnifyingGlassIcon, ClockIcon, ArrowTrendingUpIcon, ArrowTrendingDownIcon, ChevronUpIcon, ChevronDownIcon, ChartBarSquareIcon, EyeIcon, Cog6ToothIcon, BookOpenIcon, WalletIcon, TrophyIcon, SparklesIcon } from '@heroicons/react/24/outline';
-import RealTimePrices from '../components/RealTimePrices';
+import { ArrowPathIcon, BanknotesIcon, ChartBarIcon, ChartPieIcon, CreditCardIcon, CurrencyDollarIcon, ScaleIcon, TableCellsIcon, XMarkIcon, MagnifyingGlassIcon, ClockIcon, ArrowTrendingUpIcon, ArrowTrendingDownIcon, ChevronUpIcon, ChevronDownIcon, ChartBarSquareIcon, EyeIcon, Cog6ToothIcon, BookOpenIcon, WalletIcon, TrophyIcon, SparklesIcon, CubeTransparentIcon, WifiIcon, UsersIcon } from '@heroicons/react/24/outline';
 import OrderBook from '../components/OrderBook';
 import TechnicalIndicators from '../components/TechnicalIndicators';
 import AdvancedTrading from '../components/AdvancedTrading';
@@ -19,6 +18,11 @@ import DatabaseManager from '../components/DatabaseManager';
 import TradingPerformance from '../components/TradingPerformance';
 import TradingAlerts from '../components/TradingAlerts';
 import PortfolioTracker from '../components/PortfolioTracker';
+import TradingViewIntegrationExample from '../components/TradingViewIntegrationExample';
+import MarginCalculator from '../components/MarginCalculator';
+import GridTradingBot from '../components/GridTradingBot';
+import SignalTrading from '../components/SignalTrading';
+import CopyTrading from '../components/CopyTrading';
 
 interface Balance {
   asset: string;
@@ -82,7 +86,7 @@ interface TradeOrder {
   leverage?: number;
 }
 
-type Tab = 'positions' | 'orders' | 'market' | 'trading' | 'portfolio' | 'performance' | 'enhanced' | 'database';
+type Tab = 'positions' | 'orders' | 'market' | 'trading' | 'portfolio' | 'performance' | 'enhanced' | 'database' | 'bots' | 'signals' | 'copy';
 type TradingSubTab = 'simple' | 'advanced' | 'analysis' | 'pro' | 'multi-assets';
 type PositionFilter = 'all' | 'profitable' | 'losing';
 type SortField = 'symbol' | 'positionSide' | 'positionAmt' | 'avgPrice' | 'unrealizedProfit' | 'leverage';
@@ -120,6 +124,7 @@ export default function Home() {
   const [tradingPrice, setTradingPrice] = useState('');
   const [tradingLeverage, setTradingLeverage] = useState(1);
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
+  const [isTestMode, setIsTestMode] = useState(true); // Mode test par défaut
 
   // Calculs des totaux
   const totalPnL = positions.reduce((sum, pos) => sum + parseFloat(pos.unrealizedProfit), 0);
@@ -305,7 +310,12 @@ export default function Home() {
         orderData.price = tradingPrice;
       }
 
-      const response = await fetch('/api/place-order', {
+      // Choisir l'endpoint selon le mode
+      const endpoint = isTestMode ? '/api/test-order' : '/api/place-order';
+      
+      console.log('Placing order:', { orderData, isTestMode, endpoint });
+
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -315,20 +325,36 @@ export default function Home() {
 
       const result = await response.json();
       
+      console.log('Order response:', result);
+      
       if (!response.ok || result.code !== 0) {
         throw new Error(result.msg || result.error || 'Failed to place order');
       }
 
-      alert('Ordre passé avec succès !');
+      const successMessage = isTestMode 
+        ? `✅ Ordre test passé avec succès !\n📊 ${result.debugInfo}\n🔹 Order ID: ${result.data?.orderId}`
+        : '✅ Ordre réel passé avec succès !';
+        
+      alert(successMessage);
+      
       // Reset form
       setTradingQuantity('');
       setTradingPrice('');
-      // Refresh data
-      fetchData();
-      fetchOrders();
+      
+      // Refresh data seulement si ce n'est pas un test
+      if (!isTestMode) {
+        fetchData();
+        fetchOrders();
+      }
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-      alert(`Erreur lors du passage de l'ordre: ${errorMessage}`);
+      
+      // Gestion d'erreur spécifique pour marge insuffisante
+      if (errorMessage.includes('Marge insuffisante')) {
+        alert(`❌ Erreur de Marge Insuffisante\n\nMessage: ${errorMessage}\n\nConseils:\n- Réduisez la quantité de l'ordre\n- Diminuez le levier\n- Ajoutez des fonds à votre compte futures`);
+      } else {
+        alert(`Erreur lors du passage de l'ordre: ${errorMessage}`);
+      }
     } finally {
       setIsSubmittingOrder(false);
     }
@@ -497,7 +523,7 @@ export default function Home() {
 
                 {/* Onglets principaux améliorés */}
                 <div className="bg-gray-900/80 p-2 rounded-xl border border-gray-700 mb-6">
-                  <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                  <div className="grid grid-cols-2 md:grid-cols-6 gap-2">
                     <TabButton
                       active={activeTab === 'positions'}
                       onClick={() => setActiveTab('positions')}
@@ -533,6 +559,27 @@ export default function Home() {
                       icon={<ChartBarIcon className="h-5 w-5" />}
                       label="Trading"
                       color="cyan"
+                    />
+                    <TabButton
+                      active={activeTab === 'bots'}
+                      onClick={() => setActiveTab('bots')}
+                      icon={<CubeTransparentIcon className="h-5 w-5" />}
+                      label="Grid Bots"
+                      color="emerald"
+                    />
+                    <TabButton
+                      active={activeTab === 'signals'}
+                      onClick={() => setActiveTab('signals')}
+                      icon={<WifiIcon className="h-5 w-5" />}
+                      label="Signaux"
+                      color="indigo"
+                    />
+                    <TabButton
+                      active={activeTab === 'copy'}
+                      onClick={() => setActiveTab('copy')}
+                      icon={<UsersIcon className="h-5 w-5" />}
+                      label="Copy Trading"
+                      color="pink"
                     />
                     <TabButton
                       active={activeTab === 'portfolio'}
@@ -886,12 +933,9 @@ export default function Home() {
 
                   {activeTradingSubTab === 'simple' && (
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                      {/* Colonne 1: Prix en temps réel */}
+                      {/* Colonne 1: Calculateur de marge */}
                       <div className="lg:col-span-1">
-                        <RealTimePrices 
-                          selectedSymbol={tradingSymbol}
-                          onSymbolSelect={setTradingSymbol}
-                        />
+                        <MarginCalculator />
                       </div>
 
                       {/* Colonne 2: Interface de trading simple */}
@@ -946,6 +990,41 @@ export default function Home() {
                                     Limit
                                   </button>
                                 </div>
+                              </div>
+
+                              {/* Mode Test */}
+                              <div>
+                                <label className="block text-sm font-medium text-gray-300 mb-2">
+                                  Mode de Trading
+                                </label>
+                                <div className="flex space-x-2">
+                                  <button
+                                    onClick={() => setIsTestMode(true)}
+                                    className={`flex-1 py-2 px-4 rounded-lg transition-colors ${
+                                      isTestMode
+                                        ? 'bg-yellow-600 text-white'
+                                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                                    }`}
+                                  >
+                                    🧪 Test
+                                  </button>
+                                  <button
+                                    onClick={() => setIsTestMode(false)}
+                                    className={`flex-1 py-2 px-4 rounded-lg transition-colors ${
+                                      !isTestMode
+                                        ? 'bg-red-600 text-white'
+                                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                                    }`}
+                                  >
+                                    💰 Réel
+                                  </button>
+                                </div>
+                                <p className="text-xs text-gray-400 mt-1">
+                                  {isTestMode 
+                                    ? '⚠️ Mode test: Aucun ordre réel ne sera passé' 
+                                    : '🚨 Mode réel: Les ordres seront exécutés sur BingX'
+                                  }
+                                </p>
                               </div>
 
                               {/* Côté */}
@@ -1059,7 +1138,9 @@ export default function Home() {
                               onClick={placeOrder}
                               disabled={isSubmittingOrder || !tradingQuantity}
                               className={`w-full py-4 px-4 rounded-lg font-bold text-lg transition-all transform hover:scale-105 ${
-                                tradingSide === 'BUY'
+                                isTestMode 
+                                  ? 'bg-yellow-600 hover:bg-yellow-700 text-white shadow-lg'
+                                  : tradingSide === 'BUY'
                                   ? 'bg-green-600 hover:bg-green-700 text-white shadow-lg'
                                   : 'bg-red-600 hover:bg-red-700 text-white shadow-lg'
                               } disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none`}
@@ -1070,15 +1151,49 @@ export default function Home() {
                                   Traitement...
                                 </div>
                               ) : (
-                                `${tradingSide === 'BUY' ? 'Acheter' : 'Vendre'} ${tradingSymbol}`
+                                <div className="flex items-center justify-center">
+                                  {isTestMode ? '🧪' : tradingSide === 'BUY' ? '💰' : '💸'}
+                                  <span className="ml-2">
+                                    {isTestMode 
+                                      ? `Tester ${tradingSide === 'BUY' ? 'Achat' : 'Vente'} ${tradingSymbol}`
+                                      : `${tradingSide === 'BUY' ? 'Acheter' : 'Vendre'} ${tradingSymbol}`
+                                    }
+                                  </span>
+                                </div>
                               )}
                             </button>
+                            
+                            {/* Avertissement mode réel */}
+                            {!isTestMode && (
+                              <div className="mt-3 p-3 bg-red-900/30 border border-red-600 rounded-lg">
+                                <p className="text-red-300 text-sm flex items-center">
+                                  <span className="text-red-500 mr-2">⚠️</span>
+                                  Mode réel activé - L'ordre sera exécuté sur BingX avec de vrais fonds !
+                                </p>
+                              </div>
+                            )}
+                            
+                            {/* Info mode test */}
+                            {isTestMode && (
+                              <div className="mt-3 p-3 bg-yellow-900/30 border border-yellow-600 rounded-lg">
+                                <p className="text-yellow-300 text-sm flex items-center">
+                                  <span className="text-yellow-500 mr-2">🧪</span>
+                                  Mode test - Aucune transaction réelle ne sera effectuée
+                                </p>
+                              </div>
+                            )}
                           </div>
 
                           {/* Informations de l'ordre */}
                           <div className="mt-6 p-4 bg-gray-700/50 rounded-lg">
                             <h4 className="text-sm font-medium text-gray-300 mb-3">Résumé de l'ordre:</h4>
                             <div className="grid grid-cols-2 gap-3 text-sm">
+                              <div className="flex justify-between">
+                                <span className="text-gray-400">Mode:</span>
+                                <span className={isTestMode ? 'text-yellow-400 font-semibold' : 'text-red-400 font-semibold'}>
+                                  {isTestMode ? '🧪 Test' : '💰 Réel'}
+                                </span>
+                              </div>
                               <div className="flex justify-between">
                                 <span className="text-gray-400">Symbole:</span>
                                 <span className="text-white font-semibold">{tradingSymbol}</span>
@@ -1144,12 +1259,9 @@ export default function Home() {
                   {activeTradingSubTab === 'analysis' && (
                     <div className="space-y-6">
                       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        {/* Colonne 1: Prix en temps réel */}
+                        {/* Colonne 1: Calculateur de marge */}
                         <div className="lg:col-span-1">
-                          <RealTimePrices 
-                            selectedSymbol={tradingSymbol}
-                            onSymbolSelect={setTradingSymbol}
-                          />
+                          <MarginCalculator />
                         </div>
 
                         {/* Colonne 2: Indicateurs techniques */}
@@ -1196,7 +1308,10 @@ export default function Home() {
               )}
 
               {activeTab === 'portfolio' && (
-                <PortfolioTracker />
+                <div className="space-y-8">
+                  <TradingViewIntegrationExample />
+                  <PortfolioTracker />
+                </div>
               )}
 
               {activeTab === 'performance' && (
@@ -1212,6 +1327,18 @@ export default function Home() {
 
               {activeTab === 'database' && (
                 <DatabaseManager />
+              )}
+
+              {activeTab === 'bots' && (
+                <GridTradingBot />
+              )}
+
+              {activeTab === 'signals' && (
+                <SignalTrading />
+              )}
+
+              {activeTab === 'copy' && (
+                <CopyTrading />
               )}
             </div>
           </div>
@@ -1386,6 +1513,11 @@ function TabButton({ active, onClick, icon, label, count, color }: {
     green: active ? 'bg-green-600 text-white shadow-lg shadow-green-600/25' : 'hover:bg-green-600/20 hover:text-green-300',
     cyan: active ? 'bg-cyan-600 text-white shadow-lg shadow-cyan-600/25' : 'hover:bg-cyan-600/20 hover:text-cyan-300',
     orange: active ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/25' : 'hover:bg-orange-600/20 hover:text-orange-300',
+    yellow: active ? 'bg-yellow-600 text-white shadow-lg shadow-yellow-600/25' : 'hover:bg-yellow-600/20 hover:text-yellow-300',
+    emerald: active ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/25' : 'hover:bg-emerald-600/20 hover:text-emerald-300',
+    indigo: active ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/25' : 'hover:bg-indigo-600/20 hover:text-indigo-300',
+    pink: active ? 'bg-pink-600 text-white shadow-lg shadow-pink-600/25' : 'hover:bg-pink-600/20 hover:text-pink-300',
+    gray: active ? 'bg-gray-600 text-white shadow-lg shadow-gray-600/25' : 'hover:bg-gray-600/20 hover:text-gray-300',
   };
 
   return (
@@ -1431,6 +1563,9 @@ function getTabColor(tab: Tab): string {
     performance: 'bg-yellow-400',
     enhanced: 'bg-purple-600',
     database: 'bg-gray-600',
+    bots: 'bg-emerald-500',
+    signals: 'bg-indigo-500',
+    copy: 'bg-pink-500',
   };
   return colors[tab];
 }
@@ -1445,6 +1580,9 @@ function getTabTitle(tab: Tab): string {
     performance: 'Performance & Analytics',
     enhanced: 'Données Enrichies BingX',
     database: 'Base de Données',
+    bots: 'Grid Trading Bots',
+    signals: 'Signal Trading',
+    copy: 'Copy Trading',
   };
   return titles[tab];
 }
@@ -1459,6 +1597,9 @@ function getTabDescription(tab: Tab): string | null {
     performance: 'Métriques détaillées et analyse de performance',
     enhanced: 'Données avancées avec calculs de risque et marché',
     database: 'Synchronisation et gestion de la base de données',
+    bots: 'Bots de trading automatisé Grid 24/7',
+    signals: 'Signaux TradingView et exécution automatique',
+    copy: 'Copiez les stratégies des meilleurs traders',
   };
   return descriptions[tab];
 }

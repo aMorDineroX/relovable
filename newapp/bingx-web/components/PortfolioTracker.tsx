@@ -101,9 +101,10 @@ export default function PortfolioTracker() {
   const [selectedTimeframe, setSelectedTimeframe] = useState<'1H' | '1D' | '1W' | '1M'>('1D');
   const [usingRealData, setUsingRealData] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  // Supprimer accountType - BingX ne supporte que Perpetual Futures
 
   // Récupérer les prix actuels des cryptos depuis CoinGecko
-  const fetchCurrentPrices = async (symbols: string[]): Promise<{ [key: string]: number }> => {
+  const fetchCurrentPrices = useCallback(async (symbols: string[]): Promise<{ [key: string]: number }> => {
     try {
       const coinIds = symbols
         .map(symbol => COINGECKO_MAPPING[symbol])
@@ -112,14 +113,19 @@ export default function PortfolioTracker() {
       
       if (!coinIds) return {};
 
+      // Créer un AbortController pour gérer le timeout manuellement
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 secondes timeout
+
       const response = await fetch(
         `https://api.coingecko.com/api/v3/simple/price?ids=${coinIds}&vs_currencies=usd`,
         { 
           headers: { 'Accept': 'application/json' },
-          // Ajouter un timeout pour éviter les blocages
-          signal: AbortSignal.timeout(10000) // 10 secondes timeout
+          signal: controller.signal
         }
       );
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         console.warn(`Erreur CoinGecko API: ${response.status} ${response.statusText}`);
@@ -163,17 +169,21 @@ export default function PortfolioTracker() {
       
       return result;
     }
-  };
+  }, []); // Pas de dépendances car elle utilise des constantes
 
   // Récupérer les données réelles du portefeuille
   const fetchRealPortfolioData = useCallback(async (): Promise<Asset[]> => {
     try {
       setError(null);
       
+      // BingX ne supporte que les Perpetual Futures (/openApi/swap/v2/)
+      const balanceEndpoint = '/api/balance'; 
+      const positionsEndpoint = '/api/positions';
+      
       // Récupérer le solde et les positions en parallèle
       const [balanceResponse, positionsResponse] = await Promise.all([
-        fetch('/api/balance').catch(() => null),
-        fetch('/api/positions').catch(() => null)
+        fetch(balanceEndpoint).catch(() => null),
+        fetch(positionsEndpoint).catch(() => null)
       ]);
 
       let balances: BingXBalance[] = [];
@@ -357,7 +367,7 @@ export default function PortfolioTracker() {
       setUsingRealData(false);
       return generateMockPortfolio();
     }
-  }, []); // useCallback avec dépendances vides car aucune variable externe n'est utilisée
+  }, []); // Pas de dépendances - données statiques maintenant
 
   // Données simulées du portefeuille (fallback)
   const generateMockPortfolio = useCallback((): Asset[] => {
@@ -455,13 +465,25 @@ export default function PortfolioTracker() {
         setLoading(true);
         setError(null);
 
-        // Essayer d'abord de récupérer les données réelles
-        let portfolioAssets = await fetchRealPortfolioData();
+        // Utiliser uniquement les données réelles BingX
+        const portfolioAssets = await fetchRealPortfolioData();
         
-        // Si aucune donnée réelle, utiliser les données mock
+        // Si aucune donnée réelle, afficher un message explicatif plutôt que des données mock
         if (!portfolioAssets || portfolioAssets.length === 0) {
-          portfolioAssets = generateMockPortfolio();
-          setUsingRealData(false);
+          setAssets([]);
+          setStats({
+            totalValue: 0,
+            totalInvested: 0,
+            totalPnL: 0,
+            totalPnLPercent: 0,
+            dayChange: 0,
+            dayChangePercent: 0,
+            portfolioHistory: []
+          });
+          setUsingRealData(true); // Toujours en mode données réelles
+          setError('🔍 Votre compte BingX Perpetual Futures est vide. Transférez des USDT depuis votre portefeuille Spot ou ouvrez des positions pour voir des données.');
+          setLoading(false);
+          return;
         }
 
         // Calculer les statistiques
@@ -502,7 +524,42 @@ export default function PortfolioTracker() {
         clearInterval(intervalId);
       }
     };
-  }, []); // Pas de dépendances pour éviter les refresh constants
+  }, []); // Pas de dépendance sur accountType - uniquement Perpetual maintenant
+
+  // Effet pour recharger les données quand le type de compte change
+  useEffect(() => {
+    let isMounted = true; // Pour éviter les mises à jour sur des composants démontés
+
+    const updateOnAccountTypeChange = async () => {
+      if (!isMounted) return;
+      
+      setLoading(true);
+      try {
+        const portfolioAssets = await fetchRealPortfolioData();
+        if (isMounted) {
+          const portfolioStats = calculatePortfolioStats(portfolioAssets);
+          setAssets(portfolioAssets);
+          setStats(portfolioStats);
+          setUsingRealData(portfolioAssets && portfolioAssets.length > 0);
+        }
+      } catch (err) {
+        if (isMounted) {
+          console.error('Erreur lors du changement de type de compte:', err);
+          setError('Impossible de charger les données pour ce type de compte');
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    updateOnAccountTypeChange();
+
+    return () => {
+      isMounted = false; // Nettoyer le flag quand le composant est démonté
+    };
+  }, []); // Supprimer les dépendances qui causent la boucle infinie
 
   // Fonction pour forcer la mise à jour
   const forceRefresh = useCallback(async () => {
@@ -517,7 +574,7 @@ export default function PortfolioTracker() {
     } finally {
       setIsRefreshing(false);
     }
-  }, [fetchRealPortfolioData, calculatePortfolioStats]); // Dépendances explicites
+  }, [fetchRealPortfolioData, calculatePortfolioStats]);
 
   if (loading) {
     return (
@@ -539,23 +596,28 @@ export default function PortfolioTracker() {
 
   return (
     <div className="space-y-6">
-      {/* Message d'information sur les données */}
-      {usingRealData && (
-        <div className="bg-blue-800/30 border border-blue-600 p-4 rounded-xl">
-          <div className="flex items-start space-x-3">
-            <div className="w-2 h-2 bg-blue-400 rounded-full mt-2"></div>
-            <div className="text-blue-200 text-sm">
-              <p className="font-medium mb-1">📊 Données de votre compte BingX :</p>
-              <ul className="list-disc list-inside space-y-1 text-xs">
-                <li><strong>Solde USDT</strong> : Marge disponible sur votre compte futures</li>
-                <li><strong>Positions</strong> : Toutes vos positions ouvertes (LONG/SHORT) avec levier</li>
-                <li><strong>Prix</strong> : Prix de marché en temps réel via CoinGecko</li>
-                <li><strong>P&L</strong> : Profits/Pertes réalisés et non-réalisés combinés</li>
-              </ul>
+      {/* Message d'information sur BingX Perpetual Futures */}
+      <div className="bg-blue-800/30 border border-blue-600 p-4 rounded-xl">
+        <div className="flex items-start space-x-3">
+          <div className="w-2 h-2 bg-blue-400 rounded-full mt-2"></div>
+          <div className="text-blue-200 text-sm">
+            <p className="font-medium mb-1">📊 Connexion à votre compte BingX Perpetual Futures :</p>
+            <ul className="list-disc list-inside space-y-1 text-xs">
+              <li><strong>Solde USDT</strong> : Marge disponible sur votre compte perpetual futures</li>
+              <li><strong>Positions</strong> : Toutes vos positions ouvertes (LONG/SHORT) avec levier</li>
+              <li><strong>Prix</strong> : Prix de marché en temps réel via CoinGecko</li>
+              <li><strong>P&L</strong> : Profits/Pertes réalisés et non-réalisés combinés</li>
+              <li><strong>Endpoints</strong> : /openApi/swap/v2/ (seule API futures disponible)</li>
+            </ul>
+            <div className="mt-2 p-2 bg-yellow-800/20 border border-yellow-600 rounded">
+              <p className="text-yellow-200 text-xs">
+                ⚠️ <strong>Note</strong> : BingX ne propose que l'API Perpetual Futures. 
+                Les "Standard Futures" ne sont pas accessibles via API.
+              </p>
             </div>
           </div>
         </div>
-      )}
+      </div>
 
       {/* Message d'erreur ou statut */}
       {error && (
@@ -575,23 +637,16 @@ export default function PortfolioTracker() {
             Évolution du Portefeuille
           </h3>
           <div className="flex items-center space-x-4">
-            {/* Indicateur de source des données */}
-            <div className="flex items-center space-x-2">
-              <div className={`w-2 h-2 rounded-full ${usingRealData ? 'bg-green-400' : 'bg-yellow-400'}`}></div>
-              <span className="text-sm text-gray-400">
-                {usingRealData ? 'Données Réelles (BingX)' : 'Données Simulées'}
-              </span>
-              {usingRealData && (
-                <button
-                  onClick={forceRefresh}
-                  disabled={isRefreshing}
-                  className="ml-2 p-1 rounded hover:bg-gray-700 transition-colors"
-                  title="Actualiser les données"
-                >
-                  <ArrowPathIcon className={`h-4 w-4 text-gray-400 ${isRefreshing ? 'animate-spin' : ''}`} />
-                </button>
-              )}
-            </div>
+            {/* Bouton de rafraîchissement */}
+            <button
+              onClick={forceRefresh}
+              disabled={isRefreshing}
+              className="flex items-center space-x-2 px-3 py-1 rounded hover:bg-gray-700 transition-colors"
+              title="Actualiser les données"
+            >
+              <ArrowPathIcon className={`h-4 w-4 text-gray-400 ${isRefreshing ? 'animate-spin' : ''}`} />
+              <span className="text-sm text-gray-400">Actualiser</span>
+            </button>
             
             <div className="flex space-x-2">
               {(['1H', '1D', '1W', '1M'] as const).map((timeframe) => (

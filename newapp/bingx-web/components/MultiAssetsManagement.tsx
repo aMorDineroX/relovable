@@ -21,9 +21,10 @@ interface MultiAssetsMargin {
 const MultiAssetsManagement: React.FC<MultiAssetsManagementProps> = ({ onUpdate }) => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null);
-  const [multiAssetsMode, setMultiAssetsMode] = useState<MultiAssetsMode | null>(null);
+  const [multiAssetsMode, setMultiAssetsMode] = useState<MultiAssetsMode>({ multiAssetsMode: false });
   const [multiAssetsMargin, setMultiAssetsMargin] = useState<MultiAssetsMargin[]>([]);
   const [multiAssetsRules, setMultiAssetsRules] = useState<any>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   const showMessage = (type: 'success' | 'error' | 'info', text: string) => {
     setMessage({ type, text });
@@ -36,11 +37,24 @@ const MultiAssetsManagement: React.FC<MultiAssetsManagementProps> = ({ onUpdate 
       const response = await fetch('/api/multi-assets/mode');
       const data = await response.json();
       
-      if (data.success) {
-        setMultiAssetsMode(data.data);
+      if (data.success && data.data) {
+        // S'assurer que les données ont la bonne structure
+        const modeData = {
+          multiAssetsMode: Boolean(data.data.multiAssetsMode || data.data)
+        };
+        setMultiAssetsMode(modeData);
+      } else {
+        // En cas d'erreur, définir une valeur par défaut
+        setMultiAssetsMode({ multiAssetsMode: false });
+        showMessage('error', data.error || 'Erreur lors de la récupération du mode multi-assets');
       }
     } catch (error) {
       console.error('Error fetching multi-assets mode:', error);
+      // En cas d'erreur, définir une valeur par défaut
+      setMultiAssetsMode({ multiAssetsMode: false });
+      showMessage('error', 'Impossible de récupérer le statut du mode multi-assets');
+    } finally {
+      setIsInitialized(true);
     }
   };
 
@@ -58,8 +72,12 @@ const MultiAssetsManagement: React.FC<MultiAssetsManagementProps> = ({ onUpdate 
       
       if (data.success) {
         showMessage('success', `Mode multi-assets ${enable ? 'activé' : 'désactivé'} avec succès !`);
-        setMultiAssetsMode(data.data);
-        onUpdate?.(data.data);
+        // S'assurer que les données ont la bonne structure
+        const modeData = {
+          multiAssetsMode: Boolean(data.data?.multiAssetsMode ?? enable)
+        };
+        setMultiAssetsMode(modeData);
+        onUpdate?.(modeData);
       } else {
         showMessage('error', data.error || 'Erreur lors de la modification du mode');
       }
@@ -149,7 +167,7 @@ const MultiAssetsManagement: React.FC<MultiAssetsManagementProps> = ({ onUpdate 
               Configuration du Mode
             </h4>
             
-            {multiAssetsMode !== null ? (
+            {isInitialized ? (
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
@@ -159,26 +177,26 @@ const MultiAssetsManagement: React.FC<MultiAssetsManagementProps> = ({ onUpdate 
                     </p>
                   </div>
                   <div className="flex items-center space-x-3">
-                    <span className={`text-sm ${multiAssetsMode.multiAssetsMode ? 'text-green-400' : 'text-gray-400'}`}>
-                      {multiAssetsMode.multiAssetsMode ? 'Activé' : 'Désactivé'}
+                    <span className={`text-sm ${multiAssetsMode?.multiAssetsMode ? 'text-green-400' : 'text-gray-400'}`}>
+                      {multiAssetsMode?.multiAssetsMode ? 'Activé' : 'Désactivé'}
                     </span>
                     <button
-                      onClick={() => toggleMultiAssetsMode(!multiAssetsMode.multiAssetsMode)}
+                      onClick={() => toggleMultiAssetsMode(!multiAssetsMode?.multiAssetsMode)}
                       disabled={loading}
                       className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                        multiAssetsMode.multiAssetsMode ? 'bg-green-600' : 'bg-gray-600'
+                        multiAssetsMode?.multiAssetsMode ? 'bg-green-600' : 'bg-gray-600'
                       }`}
                     >
                       <span
                         className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                          multiAssetsMode.multiAssetsMode ? 'translate-x-6' : 'translate-x-1'
+                          multiAssetsMode?.multiAssetsMode ? 'translate-x-6' : 'translate-x-1'
                         }`}
                       />
                     </button>
                   </div>
                 </div>
 
-                {multiAssetsMode.multiAssetsMode && (
+                {multiAssetsMode?.multiAssetsMode && (
                   <div className="bg-green-900/20 border border-green-700 p-3 rounded-lg">
                     <p className="text-sm text-green-300">
                       ✅ Le mode multi-assets est activé. Vous pouvez utiliser plusieurs devises comme garantie pour vos positions.

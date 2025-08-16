@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import "./trading.css";
+import { TradingViewProvider } from "../components/TradingViewProvider";
+import TradingViewFloatingWidget from "../components/TradingViewFloatingWidget";
+import TradingViewToggle from "../components/TradingViewToggle";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -24,11 +27,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="fr">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <TradingViewProvider>
+          {children}
+          <TradingViewToggle />
+          <TradingViewFloatingWidget />
+        </TradingViewProvider>
       </body>
     </html>
   );
