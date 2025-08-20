@@ -11,7 +11,7 @@ function sign(queryString: string, secretKey: string) {
 }
 
 export async function GET(request: Request) {
-  console.log('📞 API /orders appelée');
+  console.log('📞 API /standard/orders appelée');
   
   if (!API_KEY || !SECRET_KEY) {
     console.log('❌ Clés API manquantes');
@@ -24,9 +24,10 @@ export async function GET(request: Request) {
   const endTime = searchParams.get('endTime');
   const limit = searchParams.get('limit') || '500';
 
-  console.log('🔧 Paramètres:', { symbol, startTime, endTime, limit });
+  console.log('🔧 Paramètres Standard Futures:', { symbol, startTime, endTime, limit });
 
-  const endpoint = '/openApi/swap/v2/trade/allOrders';
+  // Endpoint pour Standard Futures (contrats à livraison)
+  const endpoint = '/openApi/contract/v1/allOrders';
   
   const params: { [key: string]: string } = {
     timestamp: Date.now().toString(),
@@ -50,29 +51,32 @@ export async function GET(request: Request) {
 
   const finalUrl = `${BASE_URL}${endpoint}?${queryString}&signature=${signature}`;
   
-  console.log('🌐 URL finale:', finalUrl.replace(/signature=[^&]*/, 'signature=***'));
+  console.log('🌐 URL finale Standard Futures:', finalUrl.replace(/signature=[^&]*/, 'signature=***'));
 
   try {
-    console.log('📡 Envoi de la requête...');
+    console.log('📡 Envoi de la requête Standard Futures...');
     const response = await axios.get(finalUrl, { 
         headers: {
             'X-BX-APIKEY': API_KEY
         }
     });
     
-    console.log('✅ Réponse reçue:', response.status);
-    console.log('📦 Données:', JSON.stringify(response.data, null, 2).slice(0, 500) + '...');
+    console.log('✅ Réponse Standard Futures reçue:', response.status);
+    console.log('📦 Données Standard Futures:', JSON.stringify(response.data, null, 2).slice(0, 500) + '...');
     
     return NextResponse.json(response.data);
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.error("❌ Erreur BingX API (Orders):", error);
+    console.error("❌ Erreur BingX API (Standard Futures Orders):", error);
     
     if (axios.isAxiosError(error)) {
       console.error("📊 Status:", error.response?.status);
       console.error("📋 Data:", error.response?.data);
     }
     
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+    return NextResponse.json({ 
+      error: errorMessage,
+      type: 'standard_futures'
+    }, { status: 500 });
   }
 }

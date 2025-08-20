@@ -23,6 +23,8 @@ import MarginCalculator from '../components/MarginCalculator';
 import GridTradingBot from '../components/GridTradingBot';
 import SignalTrading from '../components/SignalTrading';
 import CopyTrading from '../components/CopyTrading';
+import OrderHistory from '../components/OrderHistory';
+import StandardFuturesView from '../components/StandardFuturesView';
 
 interface Balance {
   asset: string;
@@ -86,7 +88,7 @@ interface TradeOrder {
   leverage?: number;
 }
 
-type Tab = 'positions' | 'orders' | 'market' | 'trading' | 'portfolio' | 'performance' | 'enhanced' | 'database' | 'bots' | 'signals' | 'copy';
+type Tab = 'positions' | 'orders' | 'market' | 'trading' | 'portfolio' | 'performance' | 'enhanced' | 'database' | 'bots' | 'signals' | 'copy' | 'standard';
 type TradingSubTab = 'simple' | 'advanced' | 'analysis' | 'pro' | 'multi-assets';
 type PositionFilter = 'all' | 'profitable' | 'losing';
 type SortField = 'symbol' | 'positionSide' | 'positionAmt' | 'avgPrice' | 'unrealizedProfit' | 'leverage';
@@ -582,6 +584,13 @@ export default function Home() {
                       color="pink"
                     />
                     <TabButton
+                      active={activeTab === 'standard'}
+                      onClick={() => setActiveTab('standard')}
+                      icon={<ClockIcon className="h-5 w-5" />}
+                      label="Standard Futures"
+                      color="amber"
+                    />
+                    <TabButton
                       active={activeTab === 'portfolio'}
                       onClick={() => setActiveTab('portfolio')}
                       icon={<WalletIcon className="h-5 w-5" />}
@@ -818,56 +827,9 @@ export default function Home() {
                 ) : null
               ) : (
                 // Onglet Historique des ordres
-                loading.orders ? (
-                  <div className="flex justify-center items-center h-48">
-                    <ArrowPathIcon className="h-8 w-8 animate-spin text-gray-400" />
-                  </div>
-                ) : orders.length > 0 ? (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left">
-                      <thead>
-                        <tr className="border-b border-gray-700">
-                          <th className="p-3">Symbole</th>
-                          <th className="p-3">Type</th>
-                          <th className="p-3">Côté</th>
-                          <th className="p-3">Quantité</th>
-                          <th className="p-3">Prix</th>
-                          <th className="p-3">Statut</th>
-                          <th className="p-3">Date</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {orders.slice(0, 50).map(order => (
-                          <tr key={order.orderId} className="border-b border-gray-800 hover:bg-gray-700/50">
-                            <td className="p-3 font-semibold">{order.symbol}</td>
-                            <td className="p-3">{order.type}</td>
-                            <td className={`p-3 font-bold ${order.side === 'BUY' ? 'text-green-400' : 'text-red-400'}`}>
-                              {order.side}
-                            </td>
-                            <td className="p-3">{parseFloat(order.quantity).toFixed(4)}</td>
-                            <td className="p-3">{parseFloat(order.price).toFixed(4)}</td>
-                            <td className="p-3">
-                              <span className={`px-2 py-1 rounded text-xs ${
-                                order.status === 'FILLED' ? 'bg-green-900 text-green-300' :
-                                order.status === 'CANCELED' ? 'bg-red-900 text-red-300' :
-                                'bg-yellow-900 text-yellow-300'
-                              }`}>
-                                {order.status}
-                              </span>
-                            </td>
-                            <td className="p-3 text-sm text-gray-400">
-                              {new Date(order.time).toLocaleDateString()}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                ) : (
-                  <div className="text-center py-10 text-gray-500">
-                    <p>Aucun ordre trouvé.</p>
-                  </div>
-                )
+                activeTab === 'orders' ? (
+                  <OrderHistory />
+                ) : null
               )}
 
               {activeTab === 'market' && (
@@ -1340,6 +1302,10 @@ export default function Home() {
               {activeTab === 'copy' && (
                 <CopyTrading />
               )}
+
+              {activeTab === 'standard' && (
+                <StandardFuturesView />
+              )}
             </div>
           </div>
         </div>
@@ -1566,6 +1532,7 @@ function getTabColor(tab: Tab): string {
     bots: 'bg-emerald-500',
     signals: 'bg-indigo-500',
     copy: 'bg-pink-500',
+    standard: 'bg-amber-500',
   };
   return colors[tab];
 }
@@ -1583,6 +1550,7 @@ function getTabTitle(tab: Tab): string {
     bots: 'Grid Trading Bots',
     signals: 'Signal Trading',
     copy: 'Copy Trading',
+    standard: 'Standard Futures',
   };
   return titles[tab];
 }
@@ -1600,6 +1568,7 @@ function getTabDescription(tab: Tab): string | null {
     bots: 'Bots de trading automatisé Grid 24/7',
     signals: 'Signaux TradingView et exécution automatique',
     copy: 'Copiez les stratégies des meilleurs traders',
+    standard: 'Contrats à livraison avec dates d\'échéance',
   };
   return descriptions[tab];
 }
