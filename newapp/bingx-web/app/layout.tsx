@@ -1,41 +1,20 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import "./trading.css";
-import { TradingViewProvider } from "../components/TradingViewProvider";
-import TradingViewFloatingWidget from "../components/TradingViewFloatingWidget";
-import TradingViewToggle from "../components/TradingViewToggle";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
-  title: "BingX Dashboard Pro - Trading Avancé",
-  description: "Interface de trading avancée pour BingX avec analyse technique et gestion des risques",
+  title: "BingX Dashboard - Test",
+  description: "Test de diagnostic",
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html lang="fr">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <TradingViewProvider>
-          {children}
-          <TradingViewToggle />
-          <TradingViewFloatingWidget />
-        </TradingViewProvider>
+      <body>
+        {children}
       </body>
     </html>
   );

@@ -1,0 +1,21 @@
+
+> bingx-web@0.1.0 dev
+> next dev
+
+ ⚠ Warning: Found multiple lockfiles. Selecting /workspaces/relovable/package-lock.json.
+   Consider removing the lockfiles at:
+   * /workspaces/relovable/newapp/bingx-web/package-lock.json
+
+   ▲ Next.js 15.4.6
+   - Local:        http://localhost:3000
+   - Network:      http://10.0.1.225:3000
+   - Environments: .env.local, .env
+   - Experiments (use with caution):
+     · optimizePackageImports
+
+ ✓ Starting...
+ ✓ Ready in 1968ms
+ ○ Compiling /test ...
+ ✓ Compiled /test in 6.4s (544 modules)
+ GET /test 200 in 7080ms
+ ✓ Compiled in 441ms (222 modules)

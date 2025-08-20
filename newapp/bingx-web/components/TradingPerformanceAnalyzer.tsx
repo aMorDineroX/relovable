@@ -3,8 +3,8 @@ import {
   ChartBarIcon,
   ClockIcon,
   CurrencyDollarIcon,
-  TrendingUpIcon,
-  TrendingDownIcon,
+  ArrowTrendingUpIcon,
+  ArrowTrendingDownIcon,
   EyeIcon
 } from '@heroicons/react/24/outline';
 
@@ -141,7 +141,7 @@ export default function TradingPerformanceAnalyzer({ accountType }: TradingPerfo
         {/* Onglets */}
         <div className="flex space-x-1 bg-white/5 rounded-lg p-1">
           {[
-            { id: 'performance', label: 'Performance', icon: TrendingUpIcon },
+            { id: 'performance', label: 'Performance', icon: ArrowTrendingUpIcon },
             { id: 'history', label: 'Historique', icon: ClockIcon },
             { id: 'fees', label: 'Frais', icon: CurrencyDollarIcon }
           ].map(({ id, label, icon: Icon }) => (

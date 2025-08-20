@@ -244,7 +244,7 @@ const TradingViewFloatingWidget: React.FC = () => {
             theme={theme}
             interval={interval}
             width="100%"
-            height={position === 'sidebar' ? '100%' : containerSize.height - (showSettings ? 140 : 60)}
+            height={position === 'sidebar' ? '100%' : `${parseInt(containerSize.height) - (showSettings ? 140 : 60)}px`}
             autosize={position !== 'floating'}
             className="h-full"
           />

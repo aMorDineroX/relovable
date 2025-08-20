@@ -380,8 +380,8 @@ const EnhancedPositionsView: React.FC = () => {
                           <span className="text-white">${parseFloat(position.initialMargin).toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-gray-400">Valeur entrée:</span>
-                          <span className="text-cyan-400">${position.entryValue}</span>
+                          <span className="text-gray-400">Prix d'entrée:</span>
+                          <span className="text-cyan-400">${parseFloat(position.avgPrice).toFixed(4)}</span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-gray-400">Valeur actuelle:</span>

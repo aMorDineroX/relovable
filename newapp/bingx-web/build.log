@@ -1,0 +1,88 @@
+
+> bingx-web@0.1.0 build
+> next build
+
+ ⚠ Warning: Found multiple lockfiles. Selecting /workspaces/relovable/package-lock.json.
+   Consider removing the lockfiles at:
+   * /workspaces/relovable/newapp/bingx-web/package-lock.json
+
+Attention: Next.js now collects completely anonymous telemetry regarding usage.
+This information is used to shape Next.js' roadmap and prioritize features.
+You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+https://nextjs.org/telemetry
+
+   ▲ Next.js 15.4.6
+   - Environments: .env.local, .env
+   - Experiments (use with caution):
+     · optimizePackageImports
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully in 25.0s
+   Skipping validation of types
+   Skipping linting
+   Collecting page data ...
+   Generating static pages (0/50) ...
+   Generating static pages (12/50) 
+   Generating static pages (24/50) 
+   Generating static pages (37/50) 
+ ✓ Generating static pages (50/50)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                 Size  First Load JS
+┌ ○ /                                    59.2 kB         159 kB
+├ ○ /_not-found                            996 B         101 kB
+├ ƒ /api/account/info                      241 B        99.8 kB
+├ ƒ /api/all-tickers                       241 B        99.8 kB
+├ ƒ /api/balance                           241 B        99.8 kB
+├ ƒ /api/close-position                    241 B        99.8 kB
+├ ƒ /api/commission-rate                   241 B        99.8 kB
+├ ƒ /api/database                          241 B        99.8 kB
+├ ƒ /api/depth                             241 B        99.8 kB
+├ ƒ /api/klines                            241 B        99.8 kB
+├ ƒ /api/market/depth                      241 B        99.8 kB
+├ ƒ /api/market/funding-rate               241 B        99.8 kB
+├ ƒ /api/market/klines                     241 B        99.8 kB
+├ ƒ /api/market/ticker                     241 B        99.8 kB
+├ ƒ /api/market/trades                     241 B        99.8 kB
+├ ƒ /api/multi-assets/margin               241 B        99.8 kB
+├ ƒ /api/multi-assets/mode                 241 B        99.8 kB
+├ ƒ /api/multi-assets/rules                241 B        99.8 kB
+├ ƒ /api/orders                            241 B        99.8 kB
+├ ƒ /api/orders-test                       241 B        99.8 kB
+├ ƒ /api/orders/history                    241 B        99.8 kB
+├ ƒ /api/performance/stats                 241 B        99.8 kB
+├ ƒ /api/place-order                       241 B        99.8 kB
+├ ƒ /api/position-history                  241 B        99.8 kB
+├ ƒ /api/position-margin                   241 B        99.8 kB
+├ ƒ /api/positions                         241 B        99.8 kB
+├ ƒ /api/positions/enhanced                241 B        99.8 kB
+├ ƒ /api/reverse-position                  241 B        99.8 kB
+├ ƒ /api/server/time                       241 B        99.8 kB
+├ ƒ /api/standard-futures/balance          241 B        99.8 kB
+├ ƒ /api/standard-futures/positions        241 B        99.8 kB
+├ ƒ /api/standard/balance                  241 B        99.8 kB
+├ ƒ /api/standard/orders                   241 B        99.8 kB
+├ ƒ /api/standard/positions                241 B        99.8 kB
+├ ƒ /api/symbols                           241 B        99.8 kB
+├ ƒ /api/sync                              241 B        99.8 kB
+├ ƒ /api/test-config                       241 B        99.8 kB
+├ ƒ /api/test-endpoints                    241 B        99.8 kB
+├ ƒ /api/test-order                        241 B        99.8 kB
+├ ƒ /api/ticker                            241 B        99.8 kB
+├ ƒ /api/trades                            241 B        99.8 kB
+├ ƒ /api/trading/commission-rates          241 B        99.8 kB
+├ ƒ /api/trading/history                   241 B        99.8 kB
+├ ƒ /api/trading/position-history          241 B        99.8 kB
+├ ƒ /api/tradingview-test                  241 B        99.8 kB
+├ ƒ /api/twap-order                        241 B        99.8 kB
+└ ○ /market                              12.9 kB         113 kB
++ First Load JS shared by all            99.6 kB
+  ├ chunks/4bd1b696-602635ee57868870.js  54.1 kB
+  ├ chunks/5964-2a1ddd40921d073b.js      43.5 kB
+  └ other shared chunks (total)           1.9 kB
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

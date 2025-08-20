@@ -40,7 +40,7 @@ if (process.env.DATABASE_URL) {
     console.log('🎉 Tous les tests réussis ! La base de données fonctionne parfaitement.');
     
   } catch (error) {
-    console.error('❌ Erreur:', error.message);
+    console.error('❌ Erreur:', error instanceof Error ? error.message : String(error));
   }
 } else {
   console.error('❌ DATABASE_URL non trouvée dans les variables d\'environnement');

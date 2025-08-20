@@ -9,20 +9,47 @@ import {
   ChartBarIcon 
 } from '@heroicons/react/24/outline';
 
+// Fonction utilitaire pour formater les dates en toute sécurité
+const safeFormatDate = (timestamp: any): string => {
+  if (!timestamp) return '-';
+  
+  let date: Date;
+  
+  // Si c'est déjà une string ISO, l'utiliser directement
+  if (typeof timestamp === 'string' && timestamp.includes('-')) {
+    date = new Date(timestamp);
+  } else {
+    // Sinon, traiter comme un timestamp
+    const numTimestamp = typeof timestamp === 'string' ? parseInt(timestamp) : timestamp;
+    if (isNaN(numTimestamp) || numTimestamp <= 0) return '-';
+    date = new Date(numTimestamp);
+  }
+  
+  // Vérifier que la date est valide
+  if (isNaN(date.getTime())) return '-';
+  
+  try {
+    return date.toISOString();
+  } catch (error) {
+    console.warn('Erreur lors du formatage de la date:', timestamp, error);
+    return '-';
+  }
+};
+
 interface StandardOrder {
-  id: string;
-  symbol: string;
-  side: 'BUY' | 'SELL';
-  type: 'MARKET' | 'LIMIT' | 'STOP';
-  quantity: number;
-  price: number;
-  filled: number;
-  status: 'FILLED' | 'PARTIALLY_FILLED' | 'CANCELLED' | 'PENDING';
-  timestamp: string;
-  fee: number;
-  pnl?: number;
-  contractType: 'DELIVERY' | 'PERPETUAL';
-  deliveryDate?: string;
+  orderId: string;
+  positionId: string;
+  avgPrice: string;
+  executedQty: string;
+  closePrice?: string;
+  cumQuote: string;
+  positionSide: string;
+  status: string;
+  time: number;
+  updateTime: number;
+  leverage: number;
+  margin: number;
+  isolated: boolean;
 }
 
 interface StandardBalance {
@@ -42,7 +69,8 @@ interface StandardPosition {
   leverage: string;
 }
 
-const StandardFuturesView: React.FC = () => {
+export default function StandardFuturesView() {
+  console.log('[StandardFuturesView] Component loaded');
   const [orders, setOrders] = useState<StandardOrder[]>([]);
   const [balance, setBalance] = useState<StandardBalance[]>([]);
   const [positions, setPositions] = useState<StandardPosition[]>([]);
@@ -52,10 +80,12 @@ const StandardFuturesView: React.FC = () => {
 
   // Fonction pour récupérer les ordres Standard Futures
   const fetchStandardOrders = async () => {
+    console.log('fetchStandardOrders - Début de la fonction');
     setLoading(true);
     setError(null);
     try {
       const response = await fetch('/api/standard/orders?limit=100');
+      console.log('fetchStandardOrders - Réponse reçue:', response.status);
       
       if (!response.ok) {
         throw new Error(`Erreur HTTP: ${response.status} - ${response.statusText}`);
@@ -63,6 +93,7 @@ const StandardFuturesView: React.FC = () => {
       
       const data = await response.json();
       console.log('Données Standard Futures Orders:', data);
+      console.log('Nombre d\éléments reçus:', Array.isArray(data) ? data.length : 'Non-array');
       
       if (data.error) {
         setError(`Erreur API Standard Futures: ${data.error}`);
@@ -107,20 +138,17 @@ const StandardFuturesView: React.FC = () => {
         price: parseFloat(order.avgPrice || order.price || '0'),
         filled: parseFloat(order.executedQty || order.cumQuantity || '0'),
         status: order.status || 'PENDING',
-        timestamp: order.time ? 
-                  new Date(parseInt(order.time)).toISOString() : 
-                  order.updateTime ? 
-                  new Date(parseInt(order.updateTime)).toISOString() :
-                  new Date().toISOString(),
+        timestamp: safeFormatDate(order.time || order.updateTime),
         fee: Math.abs(parseFloat(order.commission || order.fee || '0')),
         pnl: order.profit ? parseFloat(order.profit) : 
              order.realizedPnl ? parseFloat(order.realizedPnl) : undefined,
         contractType: 'DELIVERY', // Standard Futures sont des contrats à livraison
         deliveryDate: order.deliveryDate || order.time ? 
-                     new Date(parseInt(order.time) + 30 * 24 * 60 * 60 * 1000).toISOString() : 
+                     safeFormatDate(parseInt(order.time) + 30 * 24 * 60 * 60 * 1000) : 
                      undefined,
       }));
       
+      console.log('fetchStandardOrders - Ordres transformés:', transformedOrders.length, 'éléments');
       setOrders(transformedOrders);
       
     } catch (error) {
@@ -223,7 +251,9 @@ const StandardFuturesView: React.FC = () => {
   };
 
   useEffect(() => {
+    console.log('StandardFuturesView - useEffect déclenché, activeTab:', activeTab);
     if (activeTab === 'orders') {
+      console.log('StandardFuturesView - Chargement des ordres...');
       fetchStandardOrders();
     } else if (activeTab === 'balance') {
       fetchStandardBalance();
@@ -254,7 +284,7 @@ const StandardFuturesView: React.FC = () => {
   };
 
   const getSideColor = (side: string) => {
-    return side === 'BUY' ? 'text-green-600' : 'text-red-600';
+    return side === 'LONG' ? 'text-green-600' : 'text-red-600';
   };
 
   return (
@@ -369,27 +399,27 @@ const StandardFuturesView: React.FC = () => {
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
                           {orders.map((order) => (
-                            <tr key={order.id} className="hover:bg-gray-50">
+                            <tr key={order.orderId} className="hover:bg-gray-50">
                               <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">
-                                {order.id}
+                                {order.orderId}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                                {order.symbol}
-                                <div className="text-xs text-blue-600">{order.contractType}</div>
+                                BTC-USDT
+                                <div className="text-xs text-blue-600">Standard Futures</div>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {order.type}
+                                DELIVERY MARKET
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold">
-                                <span className={getSideColor(order.side)}>
-                                  {order.side}
+                                <span className={getSideColor(order.positionSide)}>
+                                  {order.positionSide}
                                 </span>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {formatPrice(order.quantity)}
+                                {parseFloat(order.executedQty).toLocaleString('fr-FR', { maximumFractionDigits: 8 })}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                ${formatPrice(order.price)}
+                                ${parseFloat(order.avgPrice).toLocaleString('fr-FR', { minimumFractionDigits: 2 })}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(order.status)}`}>
@@ -397,10 +427,10 @@ const StandardFuturesView: React.FC = () => {
                                 </span>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {order.deliveryDate ? formatDate(order.deliveryDate) : '-'}
+                                {order.closePrice ? formatDate(safeFormatDate(order.updateTime)) : '-'}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {formatDate(order.timestamp)}
+                                {formatDate(safeFormatDate(order.time))}
                               </td>
                             </tr>
                           ))}
@@ -604,5 +634,3 @@ const StandardFuturesView: React.FC = () => {
     </div>
   );
 };
-
-export default StandardFuturesView;

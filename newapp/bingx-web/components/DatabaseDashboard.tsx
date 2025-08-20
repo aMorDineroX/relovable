@@ -70,10 +70,10 @@ export default function DatabaseDashboard() {
         getActivityLogs(5) // 5 derniers logs
       ]);
 
-      setPositions(positionsData);
-      setPortfolio(portfolioData);
-      setOrders(ordersData);
-      setLogs(logsData);
+      setPositions(positionsData as Position[]);
+      setPortfolio(portfolioData as PortfolioAsset[]);
+      setOrders(ordersData as any[]);
+      setLogs(logsData as any[]);
       setLastUpdate(new Date());
 
       // Logger l'activité de consultation

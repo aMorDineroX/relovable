@@ -510,7 +510,7 @@ export default function SignalTrading() {
                   Exemple de Message d'Alerte TradingView
                 </h4>
                 <div className="bg-gray-800 p-4 rounded-lg font-mono text-sm text-green-400">
-                  <div className="text-gray-400 mb-2">// Message Simple:</div>
+                  <div className="text-gray-400 mb-2">{/* Message Simple: */}</div>
                   <code>
                     {`{
   "action": "{{strategy.order.action}}",
@@ -520,7 +520,7 @@ export default function SignalTrading() {
 }`}
                   </code>
                   
-                  <div className="text-gray-400 mb-2 mt-4">// Message Stratégie:</div>
+                  <div className="text-gray-400 mb-2 mt-4">{/* Message Stratégie: */}</div>
                   <code>
                     {`{
   "action": "{{strategy.order.action}}",
